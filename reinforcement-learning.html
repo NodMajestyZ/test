@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reinforcement Learning — ML Field Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+
+:root{
+  --ink:#0A0E16;
+  --ink-2:#10141F;
+  --card:#151A26;
+  --line:#232B3A;
+  --text:#E9ECF3;
+  --muted:#8B93A6;
+  --supervised:#F2B705;
+  --supervised-dim:#4A3E1A;
+  --unsupervised:#E8577A;
+  --unsupervised-dim:#3E1F2A;
+  --reinforce:#34D9A0;
+  --reinforce-dim:#173C33;
+  --accent: var(--supervised);
+  --accent-dim: var(--supervised-dim);
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+html{scroll-behavior:smooth;}
+body{
+  background:
+    radial-gradient(ellipse 900px 500px at 50% -10%, #16203a 0%, transparent 60%),
+    var(--ink);
+  color:var(--text);
+  font-family:'Inter',sans-serif;
+  -webkit-font-smoothing:antialiased;
+  min-height:100vh;
+  padding-bottom:70px;
+}
+a{color:inherit;}
+.wrap{max-width:980px; margin:0 auto; padding:0 24px;}
+
+/* Topbar */
+.topbar{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:22px 24px;
+  border-bottom:1px solid var(--line);
+  margin-bottom:8px;
+}
+.back{
+  display:inline-flex; align-items:center; gap:8px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:12.5px; letter-spacing:.04em;
+  color:var(--muted); text-decoration:none;
+  border:1px solid var(--line); border-radius:100px;
+  padding:8px 16px;
+  transition:border-color .15s ease, color .15s ease;
+}
+.back:hover{border-color:var(--accent); color:var(--text);}
+.topbar .brand{
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px; color:var(--muted); letter-spacing:.1em;
+}
+
+/* Hero */
+.algo-hero{padding:44px 24px 8px;}
+.badge{
+  display:inline-block;
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+  padding:4px 11px; border-radius:100px;
+  background:var(--accent); color:#12100A;
+  margin-bottom:16px;
+}
+.algo-hero h1{
+  font-family:'Space Grotesk',sans-serif;
+  font-weight:700;
+  font-size:clamp(30px,5vw,46px);
+  line-height:1.1;
+  margin-bottom:16px;
+}
+.algo-hero .lead{
+  color:var(--muted);
+  font-size:15.5px;
+  line-height:1.75;
+  max-width:720px;
+}
+
+/* Panels */
+.panel{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:26px;
+  margin-top:26px;
+}
+.panel h2{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:19px;
+  font-weight:600;
+  margin-bottom:14px;
+  display:flex; align-items:center; gap:10px;
+}
+.panel h2 .n{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px; color:var(--accent);
+  border:1px solid var(--accent); border-radius:100px;
+  width:22px; height:22px; display:inline-flex; align-items:center; justify-content:center;
+}
+.panel p{color:var(--muted); font-size:14px; line-height:1.75;}
+.panel p + p{margin-top:10px;}
+.panel ul{margin:10px 0 0 18px; color:var(--muted); font-size:14px; line-height:1.9;}
+.panel code{
+  font-family:'JetBrains Mono',monospace;
+  background:var(--ink-2);
+  padding:1px 6px;
+  border-radius:5px;
+  font-size:12.5px;
+  color:var(--text);
+}
+
+/* Demo area */
+.demo-grid{display:grid; grid-template-columns:1fr 300px; gap:20px;}
+@media (max-width:760px){.demo-grid{grid-template-columns:1fr;}}
+.stage{
+  background:var(--ink-2);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:14px;
+  position:relative;
+}
+canvas{
+  width:100%; height:auto; display:block;
+  background:#0B1020;
+  border-radius:8px;
+  cursor:crosshair;
+  touch-action:none;
+}
+.hint{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px; color:var(--muted);
+  margin-top:10px; line-height:1.6;
+}
+
+/* Controls */
+.controls{display:flex; flex-direction:column; gap:16px;}
+.ctrl{
+  background:var(--ink-2);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:14px 16px;
+}
+.ctrl label{
+  display:flex; justify-content:space-between; align-items:baseline;
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px; color:var(--text);
+  margin-bottom:4px;
+}
+.ctrl label .val{color:var(--accent); font-weight:600;}
+.ctrl .sub{font-size:11px; color:var(--muted); margin-bottom:8px; line-height:1.5;}
+input[type=range]{
+  width:100%; accent-color:var(--accent);
+}
+select{
+  width:100%; background:var(--ink); color:var(--text);
+  border:1px solid var(--line); border-radius:8px; padding:8px 10px;
+  font-family:'Inter',sans-serif; font-size:13px;
+}
+.btn-row{display:flex; gap:8px; flex-wrap:wrap;}
+button.btn{
+  background:var(--card);
+  border:1px solid var(--line);
+  color:var(--text);
+  font-family:'Space Grotesk',sans-serif;
+  font-weight:600;
+  font-size:13px;
+  padding:9px 15px;
+  border-radius:9px;
+  cursor:pointer;
+  transition:border-color .15s ease, transform .1s ease;
+}
+button.btn:hover{border-color:var(--accent); transform:translateY(-1px);}
+button.btn.primary{background:var(--accent); color:#12100A; border-color:var(--accent);}
+button.btn.small{padding:6px 11px; font-size:12px;}
+.readout{
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px; color:var(--muted);
+  background:var(--ink-2);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:10px 12px;
+  line-height:1.7;
+  white-space:pre-wrap;
+}
+.legend{display:flex; gap:14px; flex-wrap:wrap; font-size:11.5px; color:var(--muted); margin-top:10px;}
+.legend span{display:inline-flex; align-items:center; gap:6px;}
+.swatch{width:9px; height:9px; border-radius:50%; display:inline-block;}
+
+/* Param table */
+.param-table{width:100%; border-collapse:collapse; margin-top:6px; font-size:13px;}
+.param-table th{
+  text-align:left; font-family:'JetBrains Mono',monospace; font-size:11px;
+  color:var(--muted); text-transform:uppercase; letter-spacing:.06em;
+  padding:8px 10px; border-bottom:1px solid var(--line);
+}
+.param-table td{padding:10px 10px; border-bottom:1px solid var(--line); color:var(--text); vertical-align:top;}
+.param-table td.name{font-family:'JetBrains Mono',monospace; font-size:12.5px; color:var(--accent); white-space:nowrap;}
+.param-table td.desc{color:var(--muted); font-size:13px; line-height:1.6;}
+
+footer.pf{
+  text-align:center; margin-top:56px;
+  color:var(--muted); font-family:'JetBrains Mono',monospace;
+  font-size:11px; letter-spacing:.05em;
+}
+
+body{ --accent:var(--reinforce); --accent-dim:var(--reinforce-dim); }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <a class="back" href="index.html">← กลับหน้าแรก</a>
+    <span class="brand">ML FIELD GUIDE</span>
+  </div>
+
+  <div class="wrap">
+    <div class="algo-hero">
+      <span class="badge">Reinforcement · #12</span>
+      <h1>Reinforcement Learning<br><span style="color:var(--muted); font-size:0.55em; font-weight:500;">การเรียนรู้แบบเสริมกำลัง</span></h1>
+      <p class="lead">Agent เรียนรู้ policy การกระทำที่เพิ่ม reward สะสมสูงสุด ผ่านการลองผิดลองถูกกับสภาพแวดล้อม (ตัวอย่างนี้ใช้ Q-Learning)</p>
+    </div>
+
+    
+<div class="panel">
+  <h2><span class="n">1</span>หลักการทำงาน</h2>
+  <p>Reinforcement Learning ให้ agent เรียนรู้ผ่านการลองผิดลองถูกในสภาพแวดล้อม (environment) โดยรับ reward เมื่อทำสิ่งที่ดี และเรียนรู้ policy (นโยบายการกระทำ) ที่เพิ่ม reward สะสมในระยะยาวให้มากที่สุด ตัวอย่างนี้ใช้อัลกอริทึม Q-Learning</p>
+  <p>Agent (จุดสีเขียว) ต้องเรียนรู้เส้นทางไปยังเป้าหมาย (⭐) โดยหลบสิ่งกีดขวาง (✕) กด Train เพื่อรันหลาย episode แล้วดู policy ที่ได้</p>
+</div>
+
+<div class="panel">
+  <h2><span class="n">2</span>ลองเล่นได้เลย</h2>
+  <div class="demo-grid">
+    <div class="stage">
+      <canvas id="cv" width="640" height="380"></canvas>
+      <div class="hint">คลิกช่องในกริดเพื่อวาง/ลบสิ่งกีดขวาง (✕) แล้วกด Train เพื่อให้ agent เรียนรู้เส้นทาง</div>
+    </div>
+    <div class="controls">
+      <div class="ctrl">
+        <label>Alpha (Learning Rate) <span class="val" id="aVal">0.30</span></label>
+        <div class="sub">อัตราการอัปเดตค่า Q — สูงเรียนรู้เร็วแต่ไม่เสถียร ต่ำเรียนรู้ช้าแต่มั่นคง</div>
+        <input type="range" id="alpha" min="0.05" max="1" step="0.05" value="0.3">
+      </div>
+      <div class="ctrl">
+        <label>Gamma (Discount Factor) <span class="val" id="gVal">0.90</span></label>
+        <div class="sub">ให้ความสำคัญกับ reward ในอนาคตแค่ไหน — ใกล้ 1 มองการณ์ไกล ใกล้ 0 สนใจแค่ reward ทันที</div>
+        <input type="range" id="gamma" min="0.1" max="0.99" step="0.01" value="0.9">
+      </div>
+      <div class="ctrl">
+        <label>Epsilon (Exploration) <span class="val" id="eVal">0.20</span></label>
+        <div class="sub">โอกาสที่ agent จะ "สำรวจ" (สุ่มเดิน) แทนที่จะเลือกทางที่ดีที่สุดที่รู้อยู่แล้ว (exploitation)</div>
+        <input type="range" id="epsilon" min="0" max="1" step="0.05" value="0.2">
+      </div>
+      <div class="btn-row">
+        <button class="btn primary" id="trainBtn">Train 200 Episodes</button>
+        <button class="btn" id="resetBtn">รีเซ็ต Q-table</button>
+        <button class="btn small" id="clearWallsBtn">ล้างสิ่งกีดขวาง</button>
+      </div>
+      <div class="readout" id="out">กด Train เพื่อเริ่มให้ agent เรียนรู้</div>
+    </div>
+  </div>
+</div>
+
+<div class="panel">
+  <h2><span class="n">3</span>Parameter Tuning</h2>
+  <table class="param-table">
+    <tr><th>Parameter</th><th>ผลต่อโมเดล</th></tr>
+    <tr><td class="name">alpha (learning rate)</td><td class="desc">อัตราการอัปเดตค่า Q ต่อการเรียนรู้แต่ละครั้ง สูงไปอาจแกว่งไม่ลู่เข้า ต่ำไปเรียนรู้ช้า</td></tr>
+    <tr><td class="name">gamma (discount factor)</td><td class="desc">น้ำหนักของ reward ในอนาคตเทียบกับปัจจุบัน ใกล้ 1 ทำให้ agent วางแผนระยะยาว ใกล้ 0 ทำให้ agent โลภสั้นๆ</td></tr>
+    <tr><td class="name">epsilon (exploration rate)</td><td class="desc">ควบคุมสมดุลระหว่าง explore (ลองทางใหม่) กับ exploit (ใช้ทางที่รู้ว่าดี) — epsilon สูงช่วง early training ให้สำรวจเยอะ แล้วค่อยลดลง</td></tr>
+    <tr><td class="name">episodes</td><td class="desc">จำนวนรอบที่ agent ได้ลองเดินตั้งแต่ต้นจนจบ (ถึงเป้าหมายหรือหมดเวลา) ยิ่งมากยิ่งมีโอกาสเรียนรู้ policy ที่ดี</td></tr>
+  </table>
+</div>
+
+    
+    <footer class="pf">MADE WITH CLAUDE · ML ALGORITHM FIELD GUIDE</footer>
+  </div>
+
+<script>
+
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+const aEl=document.getElementById('alpha'), aVal=document.getElementById('aVal');
+const gEl=document.getElementById('gamma'), gVal=document.getElementById('gVal');
+const eEl=document.getElementById('epsilon'), eVal=document.getElementById('eVal');
+const out = document.getElementById('out');
+
+const SIZE = 6;
+const start = [0,0];
+const goal = [5,5];
+let walls = new Set(['1,3','2,3','3,3','3,1']);
+let Q = {};
+const actions = [[0,-1],[0,1],[-1,0],[1,0]]; // up,down,left,right
+
+function key(x,y){ return x+','+y; }
+function initQ(){
+  Q = {};
+  for(let x=0;x<SIZE;x++) for(let y=0;y<SIZE;y++) Q[key(x,y)] = [0,0,0,0];
+}
+initQ();
+
+function stepEnv(x,y,a){
+  let nx=x+actions[a][0], ny=y+actions[a][1];
+  if(nx<0||nx>=SIZE||ny<0||ny>=SIZE||walls.has(key(nx,ny))){ nx=x; ny=y; }
+  let reward = -0.05;
+  let done = false;
+  if(nx===goal[0]&&ny===goal[1]){ reward=1; done=true; }
+  if(walls.has(key(nx,ny))){ reward=-0.5; }
+  return {nx,ny,reward,done};
+}
+
+function trainEpisodes(n){
+  const alpha=parseFloat(aEl.value), gamma=parseFloat(gEl.value), eps=parseFloat(eEl.value);
+  let totalSteps=0, wins=0;
+  for(let ep=0; ep<n; ep++){
+    let x=start[0], y=start[1], steps=0;
+    while(steps<80){
+      steps++;
+      let a;
+      if(Math.random()<eps) a = Math.floor(Math.random()*4);
+      else { const qs=Q[key(x,y)]; a = qs.indexOf(Math.max(...qs)); }
+      const {nx,ny,reward,done} = stepEnv(x,y,a);
+      const qs = Q[key(x,y)];
+      const nqs = Q[key(nx,ny)];
+      qs[a] = qs[a] + alpha*(reward + gamma*Math.max(...nqs) - qs[a]);
+      x=nx; y=ny;
+      if(done){ wins++; break; }
+    }
+    totalSteps += steps;
+  }
+  out.textContent = `เทรน ${n} episodes\nชนะ (ถึงเป้าหมาย): ${wins}/${n}\nจำนวน step เฉลี่ย: ${(totalSteps/n).toFixed(1)}`;
+  draw();
+}
+
+function draw(){
+  ctx.clearRect(0,0,cv.width,cv.height);
+  const cell = 340/SIZE;
+  const ox = 20, oy = 20;
+  for(let x=0;x<SIZE;x++) for(let y=0;y<SIZE;y++){
+    const px = ox+x*cell, py = oy+y*cell;
+    ctx.fillStyle = '#151A26';
+    ctx.fillRect(px,py,cell-2,cell-2);
+    if(walls.has(key(x,y))){
+      ctx.fillStyle = '#E8577A'; ctx.font = (cell*0.5)+'px sans-serif'; ctx.textAlign='center';
+      ctx.fillText('✕', px+cell/2, py+cell*0.65);
+    } else {
+      const qs = Q[key(x,y)];
+      const best = qs.indexOf(Math.max(...qs));
+      if(Math.max(...qs) !== 0){
+        ctx.fillStyle = 'rgba(52,217,160,0.7)'; ctx.font=(cell*0.35)+'px sans-serif'; ctx.textAlign='center';
+        const arrow = ['↑','↓','←','→'][best];
+        ctx.fillText(arrow, px+cell/2, py+cell*0.6);
+      }
+    }
+  }
+  ctx.fillStyle='#F2B705'; ctx.font=(cell*0.5)+'px sans-serif'; ctx.textAlign='center';
+  ctx.fillText('⭐', ox+goal[0]*cell+cell/2, oy+goal[1]*cell+cell*0.68);
+  ctx.fillStyle='#34D9A0';
+  ctx.beginPath(); ctx.arc(ox+start[0]*cell+cell/2, oy+start[1]*cell+cell/2, cell*0.28, 0, 7); ctx.fill();
+
+  // legend / policy playthrough panel on the right side of canvas
+  ctx.textAlign='left';
+  ctx.fillStyle='#8B93A6'; ctx.font='12px JetBrains Mono';
+  ctx.fillText('เขียว = จุดเริ่ม  ⭐ = เป้าหมาย  ✕ = สิ่งกีดขวาง (คลิกเพื่อวาง/ลบ)', ox, oy+SIZE*cell+22);
+  ctx.fillText('ลูกศร = ทิศทางที่ Q-table แนะนำในแต่ละช่อง ณ ตอนนี้', ox, oy+SIZE*cell+40);
+}
+
+cv.addEventListener('click', e=>{
+  const rect = cv.getBoundingClientRect();
+  const scaleX=cv.width/rect.width, scaleY=cv.height/rect.height;
+  const px=(e.clientX-rect.left)*scaleX, py=(e.clientY-rect.top)*scaleY;
+  const cell = 340/SIZE, ox=20, oy=20;
+  const x = Math.floor((px-ox)/cell), y = Math.floor((py-oy)/cell);
+  if(x<0||x>=SIZE||y<0||y>=SIZE) return;
+  if((x===start[0]&&y===start[1]) || (x===goal[0]&&y===goal[1])) return;
+  const k = key(x,y);
+  if(walls.has(k)) walls.delete(k); else walls.add(k);
+  draw();
+});
+document.getElementById('trainBtn').addEventListener('click', ()=>trainEpisodes(200));
+document.getElementById('resetBtn').addEventListener('click', ()=>{ initQ(); draw(); out.textContent='กด Train เพื่อเริ่มให้ agent เรียนรู้'; });
+document.getElementById('clearWallsBtn').addEventListener('click', ()=>{ walls=new Set(); draw(); });
+aEl.addEventListener('input', ()=>{aVal.textContent=parseFloat(aEl.value).toFixed(2);});
+gEl.addEventListener('input', ()=>{gVal.textContent=parseFloat(gEl.value).toFixed(2);});
+eEl.addEventListener('input', ()=>{eVal.textContent=parseFloat(eEl.value).toFixed(2);});
+draw();
+
+</script>
+</body>
+</html>

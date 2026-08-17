@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Decision Tree — ML Field Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+
+:root{
+  --ink:#0A0E16;
+  --ink-2:#10141F;
+  --card:#151A26;
+  --line:#232B3A;
+  --text:#E9ECF3;
+  --muted:#8B93A6;
+  --supervised:#F2B705;
+  --supervised-dim:#4A3E1A;
+  --unsupervised:#E8577A;
+  --unsupervised-dim:#3E1F2A;
+  --reinforce:#34D9A0;
+  --reinforce-dim:#173C33;
+  --accent: var(--supervised);
+  --accent-dim: var(--supervised-dim);
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+html{scroll-behavior:smooth;}
+body{
+  background:
+    radial-gradient(ellipse 900px 500px at 50% -10%, #16203a 0%, transparent 60%),
+    var(--ink);
+  color:var(--text);
+  font-family:'Inter',sans-serif;
+  -webkit-font-smoothing:antialiased;
+  min-height:100vh;
+  padding-bottom:70px;
+}
+a{color:inherit;}
+.wrap{max-width:980px; margin:0 auto; padding:0 24px;}
+
+/* Topbar */
+.topbar{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:22px 24px;
+  border-bottom:1px solid var(--line);
+  margin-bottom:8px;
+}
+.back{
+  display:inline-flex; align-items:center; gap:8px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:12.5px; letter-spacing:.04em;
+  color:var(--muted); text-decoration:none;
+  border:1px solid var(--line); border-radius:100px;
+  padding:8px 16px;
+  transition:border-color .15s ease, color .15s ease;
+}
+.back:hover{border-color:var(--accent); color:var(--text);}
+.topbar .brand{
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px; color:var(--muted); letter-spacing:.1em;
+}
+
+/* Hero */
+.algo-hero{padding:44px 24px 8px;}
+.badge{
+  display:inline-block;
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+  padding:4px 11px; border-radius:100px;
+  background:var(--accent); color:#12100A;
+  margin-bottom:16px;
+}
+.algo-hero h1{
+  font-family:'Space Grotesk',sans-serif;
+  font-weight:700;
+  font-size:clamp(30px,5vw,46px);
+  line-height:1.1;
+  margin-bottom:16px;
+}
+.algo-hero .lead{
+  color:var(--muted);
+  font-size:15.5px;
+  line-height:1.75;
+  max-width:720px;
+}
+
+/* Panels */
+.panel{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:26px;
+  margin-top:26px;
+}
+.panel h2{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:19px;
+  font-weight:600;
+  margin-bottom:14px;
+  display:flex; align-items:center; gap:10px;
+}
+.panel h2 .n{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px; color:var(--accent);
+  border:1px solid var(--accent); border-radius:100px;
+  width:22px; height:22px; display:inline-flex; align-items:center; justify-content:center;
+}
+.panel p{color:var(--muted); font-size:14px; line-height:1.75;}
+.panel p + p{margin-top:10px;}
+.panel ul{margin:10px 0 0 18px; color:var(--muted); font-size:14px; line-height:1.9;}
+.panel code{
+  font-family:'JetBrains Mono',monospace;
+  background:var(--ink-2);
+  padding:1px 6px;
+  border-radius:5px;
+  font-size:12.5px;
+  color:var(--text);
+}
+
+/* Demo area */
+.demo-grid{display:grid; grid-template-columns:1fr 300px; gap:20px;}
+@media (max-width:760px){.demo-grid{grid-template-columns:1fr;}}
+.stage{
+  background:var(--ink-2);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:14px;
+  position:relative;
+}
+canvas{
+  width:100%; height:auto; display:block;
+  background:#0B1020;
+  border-radius:8px;
+  cursor:crosshair;
+  touch-action:none;
+}
+.hint{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px; color:var(--muted);
+  margin-top:10px; line-height:1.6;
+}
+
+/* Controls */
+.controls{display:flex; flex-direction:column; gap:16px;}
+.ctrl{
+  background:var(--ink-2);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:14px 16px;
+}
+.ctrl label{
+  display:flex; justify-content:space-between; align-items:baseline;
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px; color:var(--text);
+  margin-bottom:4px;
+}
+.ctrl label .val{color:var(--accent); font-weight:600;}
+.ctrl .sub{font-size:11px; color:var(--muted); margin-bottom:8px; line-height:1.5;}
+input[type=range]{
+  width:100%; accent-color:var(--accent);
+}
+select{
+  width:100%; background:var(--ink); color:var(--text);
+  border:1px solid var(--line); border-radius:8px; padding:8px 10px;
+  font-family:'Inter',sans-serif; font-size:13px;
+}
+.btn-row{display:flex; gap:8px; flex-wrap:wrap;}
+button.btn{
+  background:var(--card);
+  border:1px solid var(--line);
+  color:var(--text);
+  font-family:'Space Grotesk',sans-serif;
+  font-weight:600;
+  font-size:13px;
+  padding:9px 15px;
+  border-radius:9px;
+  cursor:pointer;
+  transition:border-color .15s ease, transform .1s ease;
+}
+button.btn:hover{border-color:var(--accent); transform:translateY(-1px);}
+button.btn.primary{background:var(--accent); color:#12100A; border-color:var(--accent);}
+button.btn.small{padding:6px 11px; font-size:12px;}
+.readout{
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px; color:var(--muted);
+  background:var(--ink-2);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:10px 12px;
+  line-height:1.7;
+  white-space:pre-wrap;
+}
+.legend{display:flex; gap:14px; flex-wrap:wrap; font-size:11.5px; color:var(--muted); margin-top:10px;}
+.legend span{display:inline-flex; align-items:center; gap:6px;}
+.swatch{width:9px; height:9px; border-radius:50%; display:inline-block;}
+
+/* Param table */
+.param-table{width:100%; border-collapse:collapse; margin-top:6px; font-size:13px;}
+.param-table th{
+  text-align:left; font-family:'JetBrains Mono',monospace; font-size:11px;
+  color:var(--muted); text-transform:uppercase; letter-spacing:.06em;
+  padding:8px 10px; border-bottom:1px solid var(--line);
+}
+.param-table td{padding:10px 10px; border-bottom:1px solid var(--line); color:var(--text); vertical-align:top;}
+.param-table td.name{font-family:'JetBrains Mono',monospace; font-size:12.5px; color:var(--accent); white-space:nowrap;}
+.param-table td.desc{color:var(--muted); font-size:13px; line-height:1.6;}
+
+footer.pf{
+  text-align:center; margin-top:56px;
+  color:var(--muted); font-family:'JetBrains Mono',monospace;
+  font-size:11px; letter-spacing:.05em;
+}
+
+body{ --accent:var(--supervised); --accent-dim:var(--supervised-dim); }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <a class="back" href="index.html">← กลับหน้าแรก</a>
+    <span class="brand">ML FIELD GUIDE</span>
+  </div>
+
+  <div class="wrap">
+    <div class="algo-hero">
+      <span class="badge">Supervised · #4</span>
+      <h1>Decision Tree<br><span style="color:var(--muted); font-size:0.55em; font-weight:500;">ต้นไม้ตัดสินใจ</span></h1>
+      <p class="lead">แบ่งพื้นที่ข้อมูลทีละขั้นด้วยเงื่อนไข if-else บนฟีเจอร์ จนได้พื้นที่ที่แต่ละคลาสแยกกันชัดเจน</p>
+    </div>
+
+    
+<div class="panel">
+  <h2><span class="n">1</span>หลักการทำงาน</h2>
+  <p>Decision Tree แบ่งข้อมูลออกเป็นส่วนย่อยๆ ทีละขั้น โดยเลือกจุดตัด (threshold) บนฟีเจอร์ที่ทำให้แต่ละส่วนมีความ "บริสุทธิ์" ของคลาสมากที่สุด (วัดด้วย Gini impurity) ทำซ้ำจนถึงความลึกสูงสุดที่กำหนด</p>
+  <p>เพิ่มจุดข้อมูลสองคลาส แล้วปรับ Max Depth เพื่อดูว่าต้นไม้แบ่งพื้นที่ (region) อย่างไร</p>
+</div>
+
+<div class="panel">
+  <h2><span class="n">2</span>ลองเล่นได้เลย</h2>
+  <div class="demo-grid">
+    <div class="stage">
+      <canvas id="cv" width="640" height="380"></canvas>
+      <div class="hint">คลิกเพิ่มจุดของคลาสที่เลือกไว้ อย่างน้อยฝั่งละ 3-4 จุด</div>
+      <div class="legend">
+        <span><span class="swatch" style="background:#F2B705"></span>คลาส A</span>
+        <span><span class="swatch" style="background:#5B7CFA"></span>คลาส B</span>
+      </div>
+    </div>
+    <div class="controls">
+      <div class="btn-row">
+        <button class="btn primary small" id="classA">+ คลาส A</button>
+        <button class="btn small" id="classB">+ คลาส B</button>
+      </div>
+      <div class="ctrl">
+        <label>Max Depth <span class="val" id="depthVal">2</span></label>
+        <div class="sub">ความลึกสูงสุดของต้นไม้ — ลึกมากแบ่งพื้นที่ละเอียดจนอาจ overfit ตื้นเกินไปอาจ underfit</div>
+        <input type="range" id="depth" min="1" max="6" step="1" value="2">
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="clearBtn">ล้างจุด</button>
+        <button class="btn small" id="sampleBtn">สุ่มตัวอย่าง</button>
+      </div>
+      <div class="readout" id="out">เพิ่มจุดข้อมูลทั้งสองคลาสเพื่อดูการแบ่ง</div>
+    </div>
+  </div>
+</div>
+
+<div class="panel">
+  <h2><span class="n">3</span>Parameter Tuning</h2>
+  <table class="param-table">
+    <tr><th>Parameter</th><th>ผลต่อโมเดล</th></tr>
+    <tr><td class="name">max_depth</td><td class="desc">ความลึกสูงสุดของต้นไม้ ยิ่งลึกยิ่งแบ่งพื้นที่ซับซ้อนขึ้นและ fit ข้อมูล train แม่นขึ้น แต่เสี่ยง overfitting สูง</td></tr>
+    <tr><td class="name">min_samples_split</td><td class="desc">จำนวนตัวอย่างขั้นต่ำในโหนดก่อนจะยอมแบ่งต่อ ค่าสูงช่วยลด overfitting</td></tr>
+    <tr><td class="name">criterion</td><td class="desc">เกณฑ์วัดความบริสุทธิ์ของการแบ่ง เช่น Gini impurity หรือ Entropy (ตัวอย่างนี้ใช้ Gini)</td></tr>
+  </table>
+</div>
+
+    
+    <footer class="pf">MADE WITH CLAUDE · ML ALGORITHM FIELD GUIDE</footer>
+  </div>
+
+<script>
+
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+const depthEl = document.getElementById('depth'), depthVal = document.getElementById('depthVal');
+const out = document.getElementById('out');
+let points = [];
+let mode = 0;
+
+function toData(px,py){ return [ (px/cv.width)*10, 10-(py/cv.height)*10 ]; }
+function toPixel(dx,dy){ return [ (dx/10)*cv.width, cv.height-(dy/10)*cv.height ]; }
+const colors = ['#F2B705','#5B7CFA'];
+
+function gini(subset){
+  if(subset.length===0) return 0;
+  const c0 = subset.filter(p=>p[2]===0).length;
+  const p0 = c0/subset.length, p1 = 1-p0;
+  return 1 - p0*p0 - p1*p1;
+}
+
+function bestSplit(subset){
+  let best = null;
+  for(let dim=0; dim<2; dim++){
+    const vals = [...new Set(subset.map(p=>p[dim]))].sort((a,b)=>a-b);
+    for(let i=0;i<vals.length-1;i++){
+      const thresh = (vals[i]+vals[i+1])/2;
+      const left = subset.filter(p=>p[dim]<=thresh);
+      const right = subset.filter(p=>p[dim]>thresh);
+      if(left.length===0||right.length===0) continue;
+      const impurity = (left.length*gini(left) + right.length*gini(right))/subset.length;
+      if(!best || impurity < best.impurity) best = {dim, thresh, impurity};
+    }
+  }
+  return best;
+}
+
+function buildTree(subset, depth, maxDepth){
+  const c0 = subset.filter(p=>p[2]===0).length, c1 = subset.length-c0;
+  const label = c0>=c1 ? 0 : 1;
+  if(depth>=maxDepth || gini(subset)===0 || subset.length<2) return {leaf:true, label};
+  const split = bestSplit(subset);
+  if(!split) return {leaf:true, label};
+  const left = subset.filter(p=> p[split.dim]<=split.thresh);
+  const right = subset.filter(p=> p[split.dim]>split.thresh);
+  return {leaf:false, dim:split.dim, thresh:split.thresh,
+    left: buildTree(left, depth+1, maxDepth), right: buildTree(right, depth+1, maxDepth)};
+}
+function predict(tree, pt){
+  if(tree.leaf) return tree.label;
+  return pt[tree.dim] <= tree.thresh ? predict(tree.left, pt) : predict(tree.right, pt);
+}
+
+function draw(){
+  ctx.clearRect(0,0,cv.width,cv.height);
+  if(points.length>=2){
+    const maxDepth = parseInt(depthEl.value);
+    const tree = buildTree(points, 0, maxDepth);
+    const cell = 10;
+    for(let px=0; px<cv.width; px+=cell){
+      for(let py=0; py<cv.height; py+=cell){
+        const [dx,dy] = toData(px+cell/2, py+cell/2);
+        const label = predict(tree, [dx,dy]);
+        ctx.fillStyle = label===0 ? 'rgba(242,183,5,0.16)' : 'rgba(91,124,250,0.16)';
+        ctx.fillRect(px,py,cell,cell);
+      }
+    }
+    let correct=0;
+    points.forEach(p=>{ if(predict(tree,p)===p[2]) correct++; });
+    out.textContent = `max_depth=${maxDepth}\nจุดข้อมูล: ${points.length}\nTrain accuracy: ${(100*correct/points.length).toFixed(1)}%`;
+  }
+  ctx.strokeStyle='#232B3A';
+  for(let i=1;i<10;i++){
+    let x=(i/10)*cv.width; ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,cv.height); ctx.stroke();
+    let y=(i/10)*cv.height; ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(cv.width,y); ctx.stroke();
+  }
+  points.forEach(p=>{
+    const [px,py]=toPixel(p[0],p[1]);
+    ctx.fillStyle = colors[p[2]];
+    ctx.beginPath(); ctx.arc(px,py,5,0,7); ctx.fill();
+  });
+}
+
+cv.addEventListener('click', e=>{
+  const rect = cv.getBoundingClientRect();
+  const scaleX=cv.width/rect.width, scaleY=cv.height/rect.height;
+  const px=(e.clientX-rect.left)*scaleX, py=(e.clientY-rect.top)*scaleY;
+  const d = toData(px,py);
+  points.push([d[0],d[1],mode]);
+  draw();
+});
+document.getElementById('classA').addEventListener('click', ()=>mode=0);
+document.getElementById('classB').addEventListener('click', ()=>mode=1);
+document.getElementById('clearBtn').addEventListener('click', ()=>{points=[]; draw(); out.textContent='เพิ่มจุดข้อมูลทั้งสองคลาสเพื่อดูการแบ่ง';});
+document.getElementById('sampleBtn').addEventListener('click', ()=>{
+  points = [];
+  for(let i=0;i<8;i++) points.push([1+Math.random()*4, 1+Math.random()*4, 0]);
+  for(let i=0;i<8;i++) points.push([5+Math.random()*4, 5+Math.random()*4, 1]);
+  draw();
+});
+depthEl.addEventListener('input', ()=>{ depthVal.textContent = depthEl.value; draw(); });
+draw();
+
+</script>
+</body>
+</html>

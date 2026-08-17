@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Logistic Regression — ML Field Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+
+:root{
+  --ink:#0A0E16;
+  --ink-2:#10141F;
+  --card:#151A26;
+  --line:#232B3A;
+  --text:#E9ECF3;
+  --muted:#8B93A6;
+  --supervised:#F2B705;
+  --supervised-dim:#4A3E1A;
+  --unsupervised:#E8577A;
+  --unsupervised-dim:#3E1F2A;
+  --reinforce:#34D9A0;
+  --reinforce-dim:#173C33;
+  --accent: var(--supervised);
+  --accent-dim: var(--supervised-dim);
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+html{scroll-behavior:smooth;}
+body{
+  background:
+    radial-gradient(ellipse 900px 500px at 50% -10%, #16203a 0%, transparent 60%),
+    var(--ink);
+  color:var(--text);
+  font-family:'Inter',sans-serif;
+  -webkit-font-smoothing:antialiased;
+  min-height:100vh;
+  padding-bottom:70px;
+}
+a{color:inherit;}
+.wrap{max-width:980px; margin:0 auto; padding:0 24px;}
+
+/* Topbar */
+.topbar{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:22px 24px;
+  border-bottom:1px solid var(--line);
+  margin-bottom:8px;
+}
+.back{
+  display:inline-flex; align-items:center; gap:8px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:12.5px; letter-spacing:.04em;
+  color:var(--muted); text-decoration:none;
+  border:1px solid var(--line); border-radius:100px;
+  padding:8px 16px;
+  transition:border-color .15s ease, color .15s ease;
+}
+.back:hover{border-color:var(--accent); color:var(--text);}
+.topbar .brand{
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px; color:var(--muted); letter-spacing:.1em;
+}
+
+/* Hero */
+.algo-hero{padding:44px 24px 8px;}
+.badge{
+  display:inline-block;
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+  padding:4px 11px; border-radius:100px;
+  background:var(--accent); color:#12100A;
+  margin-bottom:16px;
+}
+.algo-hero h1{
+  font-family:'Space Grotesk',sans-serif;
+  font-weight:700;
+  font-size:clamp(30px,5vw,46px);
+  line-height:1.1;
+  margin-bottom:16px;
+}
+.algo-hero .lead{
+  color:var(--muted);
+  font-size:15.5px;
+  line-height:1.75;
+  max-width:720px;
+}
+
+/* Panels */
+.panel{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:26px;
+  margin-top:26px;
+}
+.panel h2{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:19px;
+  font-weight:600;
+  margin-bottom:14px;
+  display:flex; align-items:center; gap:10px;
+}
+.panel h2 .n{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px; color:var(--accent);
+  border:1px solid var(--accent); border-radius:100px;
+  width:22px; height:22px; display:inline-flex; align-items:center; justify-content:center;
+}
+.panel p{color:var(--muted); font-size:14px; line-height:1.75;}
+.panel p + p{margin-top:10px;}
+.panel ul{margin:10px 0 0 18px; color:var(--muted); font-size:14px; line-height:1.9;}
+.panel code{
+  font-family:'JetBrains Mono',monospace;
+  background:var(--ink-2);
+  padding:1px 6px;
+  border-radius:5px;
+  font-size:12.5px;
+  color:var(--text);
+}
+
+/* Demo area */
+.demo-grid{display:grid; grid-template-columns:1fr 300px; gap:20px;}
+@media (max-width:760px){.demo-grid{grid-template-columns:1fr;}}
+.stage{
+  background:var(--ink-2);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:14px;
+  position:relative;
+}
+canvas{
+  width:100%; height:auto; display:block;
+  background:#0B1020;
+  border-radius:8px;
+  cursor:crosshair;
+  touch-action:none;
+}
+.hint{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px; color:var(--muted);
+  margin-top:10px; line-height:1.6;
+}
+
+/* Controls */
+.controls{display:flex; flex-direction:column; gap:16px;}
+.ctrl{
+  background:var(--ink-2);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:14px 16px;
+}
+.ctrl label{
+  display:flex; justify-content:space-between; align-items:baseline;
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px; color:var(--text);
+  margin-bottom:4px;
+}
+.ctrl label .val{color:var(--accent); font-weight:600;}
+.ctrl .sub{font-size:11px; color:var(--muted); margin-bottom:8px; line-height:1.5;}
+input[type=range]{
+  width:100%; accent-color:var(--accent);
+}
+select{
+  width:100%; background:var(--ink); color:var(--text);
+  border:1px solid var(--line); border-radius:8px; padding:8px 10px;
+  font-family:'Inter',sans-serif; font-size:13px;
+}
+.btn-row{display:flex; gap:8px; flex-wrap:wrap;}
+button.btn{
+  background:var(--card);
+  border:1px solid var(--line);
+  color:var(--text);
+  font-family:'Space Grotesk',sans-serif;
+  font-weight:600;
+  font-size:13px;
+  padding:9px 15px;
+  border-radius:9px;
+  cursor:pointer;
+  transition:border-color .15s ease, transform .1s ease;
+}
+button.btn:hover{border-color:var(--accent); transform:translateY(-1px);}
+button.btn.primary{background:var(--accent); color:#12100A; border-color:var(--accent);}
+button.btn.small{padding:6px 11px; font-size:12px;}
+.readout{
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px; color:var(--muted);
+  background:var(--ink-2);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:10px 12px;
+  line-height:1.7;
+  white-space:pre-wrap;
+}
+.legend{display:flex; gap:14px; flex-wrap:wrap; font-size:11.5px; color:var(--muted); margin-top:10px;}
+.legend span{display:inline-flex; align-items:center; gap:6px;}
+.swatch{width:9px; height:9px; border-radius:50%; display:inline-block;}
+
+/* Param table */
+.param-table{width:100%; border-collapse:collapse; margin-top:6px; font-size:13px;}
+.param-table th{
+  text-align:left; font-family:'JetBrains Mono',monospace; font-size:11px;
+  color:var(--muted); text-transform:uppercase; letter-spacing:.06em;
+  padding:8px 10px; border-bottom:1px solid var(--line);
+}
+.param-table td{padding:10px 10px; border-bottom:1px solid var(--line); color:var(--text); vertical-align:top;}
+.param-table td.name{font-family:'JetBrains Mono',monospace; font-size:12.5px; color:var(--accent); white-space:nowrap;}
+.param-table td.desc{color:var(--muted); font-size:13px; line-height:1.6;}
+
+footer.pf{
+  text-align:center; margin-top:56px;
+  color:var(--muted); font-family:'JetBrains Mono',monospace;
+  font-size:11px; letter-spacing:.05em;
+}
+
+body{ --accent:var(--supervised); --accent-dim:var(--supervised-dim); }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <a class="back" href="index.html">← กลับหน้าแรก</a>
+    <span class="brand">ML FIELD GUIDE</span>
+  </div>
+
+  <div class="wrap">
+    <div class="algo-hero">
+      <span class="badge">Supervised · #2</span>
+      <h1>Logistic Regression<br><span style="color:var(--muted); font-size:0.55em; font-weight:500;">การถดถอยโลจิสติก</span></h1>
+      <p class="lead">จำแนกข้อมูลออกเป็นสองกลุ่ม โดยแปลงผลลัพธ์เป็นความน่าจะเป็นผ่านฟังก์ชัน Sigmoid</p>
+    </div>
+
+    
+<div class="panel">
+  <h2><span class="n">1</span>หลักการทำงาน</h2>
+  <p>Logistic Regression ใช้จำแนกประเภท (classification) โดยแปลงผลรวมเชิงเส้นของฟีเจอร์ให้เป็นความน่าจะเป็น (0-1) ผ่านฟังก์ชัน Sigmoid แล้วเทรนด้วย Gradient Descent เพื่อลด loss (cross-entropy)</p>
+  <p>เลือกคลาส แล้วคลิกเพิ่มจุดบนกราฟ จากนั้นกด Train เพื่อดูเส้นแบ่ง (decision boundary) ที่โมเดลเรียนรู้</p>
+</div>
+
+<div class="panel">
+  <h2><span class="n">2</span>ลองเล่นได้เลย</h2>
+  <div class="demo-grid">
+    <div class="stage">
+      <canvas id="cv" width="640" height="380"></canvas>
+      <div class="hint">เลือกคลาส A หรือ B แล้วคลิกบนกราฟเพื่อเพิ่มจุด กด Train เพื่อเรียนรู้เส้นแบ่ง</div>
+      <div class="legend">
+        <span><span class="swatch" style="background:#F2B705"></span>คลาส A</span>
+        <span><span class="swatch" style="background:#5B7CFA"></span>คลาส B</span>
+        <span><span class="swatch" style="background:#E9ECF3"></span>decision boundary</span>
+      </div>
+    </div>
+    <div class="controls">
+      <div class="btn-row">
+        <button class="btn primary small" id="classA">+ คลาส A</button>
+        <button class="btn small" id="classB">+ คลาส B</button>
+      </div>
+      <div class="ctrl">
+        <label>Learning Rate <span class="val" id="lrVal">0.10</span></label>
+        <div class="sub">อัตราการเรียนรู้ — สูงไปอาจ overshoot ไม่ลู่เข้า ต่ำไปเรียนรู้ช้า</div>
+        <input type="range" id="lr" min="0.01" max="1" step="0.01" value="0.1">
+      </div>
+      <div class="ctrl">
+        <label>Epochs / ครั้งที่ Train <span class="val" id="epVal">200</span></label>
+        <div class="sub">จำนวนรอบการอัปเดตน้ำหนักต่อการกด Train หนึ่งครั้ง</div>
+        <input type="range" id="ep" min="10" max="1000" step="10" value="200">
+      </div>
+      <div class="btn-row">
+        <button class="btn primary" id="trainBtn">Train</button>
+        <button class="btn" id="clearBtn">ล้างจุด</button>
+      </div>
+      <div class="readout" id="out">เพิ่มจุดทั้งสองคลาสแล้วกด Train</div>
+    </div>
+  </div>
+</div>
+
+<div class="panel">
+  <h2><span class="n">3</span>Parameter Tuning</h2>
+  <table class="param-table">
+    <tr><th>Parameter</th><th>ผลต่อโมเดล</th></tr>
+    <tr><td class="name">learning_rate</td><td class="desc">ก้าวการอัปเดตน้ำหนักแต่ละรอบ ค่าสูงเรียนรู้เร็วแต่เสี่ยงแกว่งไม่ลู่เข้า ค่าต่ำเสถียรแต่ช้า</td></tr>
+    <tr><td class="name">epochs</td><td class="desc">จำนวนรอบเทรน ยิ่งมากยิ่งมีโอกาสลู่เข้าจุดที่ดี แต่ถ้ามากเกินไปและ learning rate สูง อาจ overfit หรือแกว่ง</td></tr>
+    <tr><td class="name">regularization (C)</td><td class="desc">ในไลบรารีจริงมักมีค่า C ควบคุมการ penalize น้ำหนักที่ใหญ่เกินไป ช่วยลด overfitting</td></tr>
+  </table>
+</div>
+
+    
+    <footer class="pf">MADE WITH CLAUDE · ML ALGORITHM FIELD GUIDE</footer>
+  </div>
+
+<script>
+
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+const lrEl = document.getElementById('lr'), lrVal = document.getElementById('lrVal');
+const epEl = document.getElementById('ep'), epVal = document.getElementById('epVal');
+const out = document.getElementById('out');
+let points = []; // {x,y,label}
+let curClass = 0;
+let w = [0,0,0]; // w0 (bias), w1, w2
+
+function toData(px,py){ return [ (px/cv.width)*10, 10-(py/cv.height)*10 ]; }
+function toPixel(dx,dy){ return [ (dx/10)*cv.width, cv.height-(dy/10)*cv.height ]; }
+function sigmoid(z){ return 1/(1+Math.exp(-z)); }
+
+function draw(){
+  ctx.clearRect(0,0,cv.width,cv.height);
+  // background probability shading
+  const cell = 20;
+  for(let px=0; px<cv.width; px+=cell){
+    for(let py=0; py<cv.height; py+=cell){
+      const [dx,dy] = toData(px+cell/2, py+cell/2);
+      const p = sigmoid(w[0]+w[1]*dx+w[2]*dy);
+      ctx.fillStyle = p>0.5 ? `rgba(91,124,250,${0.10+0.15*(p-0.5)})` : `rgba(242,183,5,${0.10+0.15*(0.5-p)})`;
+      ctx.fillRect(px,py,cell,cell);
+    }
+  }
+  ctx.strokeStyle = '#232B3A';
+  for(let i=1;i<10;i++){
+    let x=(i/10)*cv.width; ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,cv.height); ctx.stroke();
+    let y=(i/10)*cv.height; ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(cv.width,y); ctx.stroke();
+  }
+  points.forEach(p=>{
+    const [px,py] = toPixel(p[0],p[1]);
+    ctx.fillStyle = p[2]===0 ? '#F2B705' : '#5B7CFA';
+    ctx.beginPath(); ctx.arc(px,py,5,0,7); ctx.fill();
+  });
+  // decision boundary line where w0+w1*x+w2*y = 0
+  if(Math.abs(w[2])>1e-6){
+    ctx.strokeStyle = '#E9ECF3'; ctx.lineWidth=2.5; ctx.beginPath();
+    let first=true;
+    for(let dx=0; dx<=10; dx+=0.2){
+      const dy = -(w[0]+w[1]*dx)/w[2];
+      const [px,py] = toPixel(dx,dy);
+      if(first){ctx.moveTo(px,py); first=false;} else ctx.lineTo(px,py);
+    }
+    ctx.stroke();
+  }
+}
+
+function train(){
+  const lr = parseFloat(lrEl.value), epochs = parseInt(epEl.value);
+  if(points.length < 2){ out.textContent = 'ต้องมีจุดทั้งสองคลาสก่อน'; return; }
+  for(let e=0;e<epochs;e++){
+    let g=[0,0,0];
+    points.forEach(p=>{
+      const z = w[0]+w[1]*p[0]+w[2]*p[1];
+      const pred = sigmoid(z);
+      const err = pred - p[2];
+      g[0]+=err; g[1]+=err*p[0]; g[2]+=err*p[1];
+    });
+    w[0]-=lr*g[0]/points.length;
+    w[1]-=lr*g[1]/points.length;
+    w[2]-=lr*g[2]/points.length;
+  }
+  let correct=0, loss=0;
+  points.forEach(p=>{
+    const pred = sigmoid(w[0]+w[1]*p[0]+w[2]*p[1]);
+    if((pred>0.5?1:0)===p[2]) correct++;
+    loss += -(p[2]*Math.log(pred+1e-9) + (1-p[2])*Math.log(1-pred+1e-9));
+  });
+  loss/=points.length;
+  out.textContent = `เทรน ${epochs} epochs, lr=${lr}\nความแม่นยำ: ${(100*correct/points.length).toFixed(1)}%\nLoss: ${loss.toFixed(4)}\nw = [${w.map(v=>v.toFixed(2)).join(', ')}]`;
+  draw();
+}
+
+cv.addEventListener('click', e=>{
+  const rect = cv.getBoundingClientRect();
+  const scaleX=cv.width/rect.width, scaleY=cv.height/rect.height;
+  const px=(e.clientX-rect.left)*scaleX, py=(e.clientY-rect.top)*scaleY;
+  const [dx,dy] = toData(px,py);
+  points.push([dx,dy,curClass]);
+  draw();
+});
+document.getElementById('classA').addEventListener('click', ()=>{curClass=0;});
+document.getElementById('classB').addEventListener('click', ()=>{curClass=1;});
+document.getElementById('trainBtn').addEventListener('click', train);
+document.getElementById('clearBtn').addEventListener('click', ()=>{points=[]; w=[0,0,0]; draw(); out.textContent='เพิ่มจุดทั้งสองคลาสแล้วกด Train';});
+lrEl.addEventListener('input', ()=>{lrVal.textContent = parseFloat(lrEl.value).toFixed(2);});
+epEl.addEventListener('input', ()=>{epVal.textContent = epEl.value;});
+draw();
+
+</script>
+</body>
+</html>

@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Linear Regression — ML Field Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+
+:root{
+  --ink:#0A0E16;
+  --ink-2:#10141F;
+  --card:#151A26;
+  --line:#232B3A;
+  --text:#E9ECF3;
+  --muted:#8B93A6;
+  --supervised:#F2B705;
+  --supervised-dim:#4A3E1A;
+  --unsupervised:#E8577A;
+  --unsupervised-dim:#3E1F2A;
+  --reinforce:#34D9A0;
+  --reinforce-dim:#173C33;
+  --accent: var(--supervised);
+  --accent-dim: var(--supervised-dim);
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+html{scroll-behavior:smooth;}
+body{
+  background:
+    radial-gradient(ellipse 900px 500px at 50% -10%, #16203a 0%, transparent 60%),
+    var(--ink);
+  color:var(--text);
+  font-family:'Inter',sans-serif;
+  -webkit-font-smoothing:antialiased;
+  min-height:100vh;
+  padding-bottom:70px;
+}
+a{color:inherit;}
+.wrap{max-width:980px; margin:0 auto; padding:0 24px;}
+
+/* Topbar */
+.topbar{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:22px 24px;
+  border-bottom:1px solid var(--line);
+  margin-bottom:8px;
+}
+.back{
+  display:inline-flex; align-items:center; gap:8px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:12.5px; letter-spacing:.04em;
+  color:var(--muted); text-decoration:none;
+  border:1px solid var(--line); border-radius:100px;
+  padding:8px 16px;
+  transition:border-color .15s ease, color .15s ease;
+}
+.back:hover{border-color:var(--accent); color:var(--text);}
+.topbar .brand{
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px; color:var(--muted); letter-spacing:.1em;
+}
+
+/* Hero */
+.algo-hero{padding:44px 24px 8px;}
+.badge{
+  display:inline-block;
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+  padding:4px 11px; border-radius:100px;
+  background:var(--accent); color:#12100A;
+  margin-bottom:16px;
+}
+.algo-hero h1{
+  font-family:'Space Grotesk',sans-serif;
+  font-weight:700;
+  font-size:clamp(30px,5vw,46px);
+  line-height:1.1;
+  margin-bottom:16px;
+}
+.algo-hero .lead{
+  color:var(--muted);
+  font-size:15.5px;
+  line-height:1.75;
+  max-width:720px;
+}
+
+/* Panels */
+.panel{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:26px;
+  margin-top:26px;
+}
+.panel h2{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:19px;
+  font-weight:600;
+  margin-bottom:14px;
+  display:flex; align-items:center; gap:10px;
+}
+.panel h2 .n{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px; color:var(--accent);
+  border:1px solid var(--accent); border-radius:100px;
+  width:22px; height:22px; display:inline-flex; align-items:center; justify-content:center;
+}
+.panel p{color:var(--muted); font-size:14px; line-height:1.75;}
+.panel p + p{margin-top:10px;}
+.panel ul{margin:10px 0 0 18px; color:var(--muted); font-size:14px; line-height:1.9;}
+.panel code{
+  font-family:'JetBrains Mono',monospace;
+  background:var(--ink-2);
+  padding:1px 6px;
+  border-radius:5px;
+  font-size:12.5px;
+  color:var(--text);
+}
+
+/* Demo area */
+.demo-grid{display:grid; grid-template-columns:1fr 300px; gap:20px;}
+@media (max-width:760px){.demo-grid{grid-template-columns:1fr;}}
+.stage{
+  background:var(--ink-2);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:14px;
+  position:relative;
+}
+canvas{
+  width:100%; height:auto; display:block;
+  background:#0B1020;
+  border-radius:8px;
+  cursor:crosshair;
+  touch-action:none;
+}
+.hint{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px; color:var(--muted);
+  margin-top:10px; line-height:1.6;
+}
+
+/* Controls */
+.controls{display:flex; flex-direction:column; gap:16px;}
+.ctrl{
+  background:var(--ink-2);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:14px 16px;
+}
+.ctrl label{
+  display:flex; justify-content:space-between; align-items:baseline;
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px; color:var(--text);
+  margin-bottom:4px;
+}
+.ctrl label .val{color:var(--accent); font-weight:600;}
+.ctrl .sub{font-size:11px; color:var(--muted); margin-bottom:8px; line-height:1.5;}
+input[type=range]{
+  width:100%; accent-color:var(--accent);
+}
+select{
+  width:100%; background:var(--ink); color:var(--text);
+  border:1px solid var(--line); border-radius:8px; padding:8px 10px;
+  font-family:'Inter',sans-serif; font-size:13px;
+}
+.btn-row{display:flex; gap:8px; flex-wrap:wrap;}
+button.btn{
+  background:var(--card);
+  border:1px solid var(--line);
+  color:var(--text);
+  font-family:'Space Grotesk',sans-serif;
+  font-weight:600;
+  font-size:13px;
+  padding:9px 15px;
+  border-radius:9px;
+  cursor:pointer;
+  transition:border-color .15s ease, transform .1s ease;
+}
+button.btn:hover{border-color:var(--accent); transform:translateY(-1px);}
+button.btn.primary{background:var(--accent); color:#12100A; border-color:var(--accent);}
+button.btn.small{padding:6px 11px; font-size:12px;}
+.readout{
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px; color:var(--muted);
+  background:var(--ink-2);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:10px 12px;
+  line-height:1.7;
+  white-space:pre-wrap;
+}
+.legend{display:flex; gap:14px; flex-wrap:wrap; font-size:11.5px; color:var(--muted); margin-top:10px;}
+.legend span{display:inline-flex; align-items:center; gap:6px;}
+.swatch{width:9px; height:9px; border-radius:50%; display:inline-block;}
+
+/* Param table */
+.param-table{width:100%; border-collapse:collapse; margin-top:6px; font-size:13px;}
+.param-table th{
+  text-align:left; font-family:'JetBrains Mono',monospace; font-size:11px;
+  color:var(--muted); text-transform:uppercase; letter-spacing:.06em;
+  padding:8px 10px; border-bottom:1px solid var(--line);
+}
+.param-table td{padding:10px 10px; border-bottom:1px solid var(--line); color:var(--text); vertical-align:top;}
+.param-table td.name{font-family:'JetBrains Mono',monospace; font-size:12.5px; color:var(--accent); white-space:nowrap;}
+.param-table td.desc{color:var(--muted); font-size:13px; line-height:1.6;}
+
+footer.pf{
+  text-align:center; margin-top:56px;
+  color:var(--muted); font-family:'JetBrains Mono',monospace;
+  font-size:11px; letter-spacing:.05em;
+}
+
+body{ --accent:var(--supervised); --accent-dim:var(--supervised-dim); }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <a class="back" href="index.html">← กลับหน้าแรก</a>
+    <span class="brand">ML FIELD GUIDE</span>
+  </div>
+
+  <div class="wrap">
+    <div class="algo-hero">
+      <span class="badge">Supervised · #1</span>
+      <h1>Linear Regression<br><span style="color:var(--muted); font-size:0.55em; font-weight:500;">เส้นถดถอยเชิงเส้น</span></h1>
+      <p class="lead">ทำนายค่าตัวเลขต่อเนื่องด้วยเส้นตรง (หรือเส้นโค้งพหุนาม) ที่ fit ข้อมูลได้ดีที่สุด</p>
+    </div>
+
+    
+<div class="panel">
+  <h2><span class="n">1</span>หลักการทำงาน</h2>
+  <p>Linear Regression หาเส้นตรง (หรือเส้นโค้งพหุนาม) ที่ fit ข้อมูลได้ดีที่สุด โดยลดผลรวมของกำลังสองของ error (least squares) ระหว่างค่าจริงกับค่าที่โมเดลทำนาย ใช้ทำนายค่าตัวเลขต่อเนื่อง เช่น ราคาบ้าน ยอดขาย</p>
+  <p>ในตัวอย่างนี้ คุณคลิกบนกราฟเพื่อเพิ่มจุดข้อมูล แล้วระบบจะคำนวณเส้น fit ที่ดีที่สุดให้อัตโนมัติด้วยวิธี Least Squares</p>
+</div>
+
+<div class="panel">
+  <h2><span class="n">2</span>ลองเล่นได้เลย</h2>
+  <div class="demo-grid">
+    <div class="stage">
+      <canvas id="cv" width="640" height="380"></canvas>
+      <div class="hint">คลิกบนกราฟเพื่อเพิ่มจุดข้อมูล (อย่างน้อย 2 จุด) เส้น fit จะอัปเดตอัตโนมัติ</div>
+      <div class="legend">
+        <span><span class="swatch" style="background:#F2B705"></span>จุดข้อมูล</span>
+        <span><span class="swatch" style="background:#E9ECF3"></span>เส้น fit</span>
+      </div>
+    </div>
+    <div class="controls">
+      <div class="ctrl">
+        <label>Polynomial Degree <span class="val" id="degVal">1</span></label>
+        <div class="sub">ดีกรีของพหุนาม — degree=1 คือเส้นตรงธรรมดา ค่ายิ่งสูงเส้นยิ่งโค้งตามข้อมูลมากขึ้น (เสี่ยง overfit ถ้าสูงเกินไป)</div>
+        <input type="range" id="deg" min="1" max="5" step="1" value="1">
+      </div>
+      <div class="btn-row">
+        <button class="btn primary" id="fitBtn">Fit เส้นใหม่</button>
+        <button class="btn" id="clearBtn">ล้างจุด</button>
+        <button class="btn small" id="sampleBtn">สุ่มตัวอย่าง</button>
+      </div>
+      <div class="readout" id="out">คลิกเพิ่มจุดเพื่อเริ่ม...</div>
+    </div>
+  </div>
+</div>
+
+<div class="panel">
+  <h2><span class="n">3</span>Parameter Tuning</h2>
+  <table class="param-table">
+    <tr><th>Parameter</th><th>ผลต่อโมเดล</th></tr>
+    <tr><td class="name">degree</td><td class="desc">ดีกรีพหุนาม (1=เส้นตรง, 2=โค้งพาราโบลา, 3+=ซับซ้อนขึ้น) — degree สูงเกินไปเทียบกับจำนวนจุดจะทำให้เส้นบิดตามจุดจนเกินไป (overfitting) ไม่ generalize กับข้อมูลใหม่</td></tr>
+    <tr><td class="name">regularization (แนวคิด)</td><td class="desc">ในงานจริงมักเพิ่ม L2 (Ridge) หรือ L1 (Lasso) เพื่อลด overfitting เมื่อ degree สูงหรือฟีเจอร์เยอะ</td></tr>
+  </table>
+</div>
+
+    
+    <footer class="pf">MADE WITH CLAUDE · ML ALGORITHM FIELD GUIDE</footer>
+  </div>
+
+<script>
+
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+const degEl = document.getElementById('deg');
+const degVal = document.getElementById('degVal');
+const out = document.getElementById('out');
+let points = [];
+
+function toData(px, py){ return [ (px/cv.width)*10, 10 - (py/cv.height)*10 ]; }
+function toPixel(dx, dy){ return [ (dx/10)*cv.width, cv.height - (dy/10)*cv.height ]; }
+
+function draw(){
+  ctx.clearRect(0,0,cv.width,cv.height);
+  ctx.strokeStyle = '#232B3A'; ctx.lineWidth = 1;
+  for(let i=1;i<10;i++){
+    let x = (i/10)*cv.width;
+    ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,cv.height); ctx.stroke();
+    let y = (i/10)*cv.height;
+    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(cv.width,y); ctx.stroke();
+  }
+  ctx.fillStyle = '#F2B705';
+  points.forEach(p => {
+    const [px,py] = toPixel(p[0], p[1]);
+    ctx.beginPath(); ctx.arc(px,py,5,0,7); ctx.fill();
+  });
+  if(points.length >= 2){
+    const deg = parseInt(degEl.value);
+    const coefs = polyfit(points, deg);
+    ctx.strokeStyle = '#E9ECF3'; ctx.lineWidth = 2.5; ctx.beginPath();
+    let first = true;
+    for(let px=0; px<=cv.width; px+=4){
+      const dx = (px/cv.width)*10;
+      let dy = 0;
+      for(let k=0;k<coefs.length;k++) dy += coefs[k]*Math.pow(dx,k);
+      const py = cv.height - (dy/10)*cv.height;
+      if(first){ ctx.moveTo(px,py); first=false; } else { ctx.lineTo(px,py); }
+    }
+    ctx.stroke();
+    let mse = 0;
+    points.forEach(p=>{
+      let pred=0; for(let k=0;k<coefs.length;k++) pred += coefs[k]*Math.pow(p[0],k);
+      mse += (pred-p[1])*(pred-p[1]);
+    });
+    mse /= points.length;
+    out.textContent = `จุดข้อมูล: ${points.length}\ndegree: ${deg}\nMSE: ${mse.toFixed(4)}\nสมการ: ` + coefs.map((c,i)=> i===0? c.toFixed(2) : `${c>=0?'+':''}${c.toFixed(2)}x^${i}`).join(' ');
+  } else {
+    out.textContent = 'ต้องมีอย่างน้อย 2 จุดถึงจะ fit เส้นได้';
+  }
+}
+
+// simple polynomial least squares via normal equations (Gaussian elimination)
+function polyfit(pts, degree){
+  const n = degree+1;
+  const X = pts.map(p => Array.from({length:n}, (_,k)=>Math.pow(p[0],k)));
+  const y = pts.map(p=>p[1]);
+  const XtX = Array.from({length:n},()=>Array(n).fill(0));
+  const Xty = Array(n).fill(0);
+  for(let i=0;i<X.length;i++){
+    for(let a=0;a<n;a++){
+      Xty[a] += X[i][a]*y[i];
+      for(let b=0;b<n;b++) XtX[a][b] += X[i][a]*X[i][b];
+    }
+  }
+  // add tiny ridge for numerical stability
+  for(let a=0;a<n;a++) XtX[a][a] += 1e-6;
+  return solve(XtX, Xty);
+}
+function solve(A, b){
+  const n = b.length;
+  const M = A.map((row,i)=>[...row, b[i]]);
+  for(let i=0;i<n;i++){
+    let maxRow=i;
+    for(let k=i+1;k<n;k++) if(Math.abs(M[k][i])>Math.abs(M[maxRow][i])) maxRow=k;
+    [M[i],M[maxRow]]=[M[maxRow],M[i]];
+    if(Math.abs(M[i][i])<1e-9) continue;
+    for(let k=i+1;k<n;k++){
+      const f = M[k][i]/M[i][i];
+      for(let j=i;j<=n;j++) M[k][j]-=f*M[i][j];
+    }
+  }
+  const x = Array(n).fill(0);
+  for(let i=n-1;i>=0;i--){
+    let s = M[i][n];
+    for(let j=i+1;j<n;j++) s -= M[i][j]*x[j];
+    x[i] = Math.abs(M[i][i])<1e-9 ? 0 : s/M[i][i];
+  }
+  return x;
+}
+
+cv.addEventListener('click', e=>{
+  const rect = cv.getBoundingClientRect();
+  const scaleX = cv.width/rect.width, scaleY = cv.height/rect.height;
+  const px = (e.clientX-rect.left)*scaleX, py = (e.clientY-rect.top)*scaleY;
+  points.push(toData(px,py));
+  draw();
+});
+degEl.addEventListener('input', ()=>{ degVal.textContent = degEl.value; draw(); });
+document.getElementById('fitBtn').addEventListener('click', draw);
+document.getElementById('clearBtn').addEventListener('click', ()=>{ points=[]; draw(); });
+document.getElementById('sampleBtn').addEventListener('click', ()=>{
+  points = Array.from({length:9}, (_,i)=>{
+    const x = 1+i;
+    const y = 1.2*x + 0.6 + (Math.random()-0.5)*2.2;
+    return [x, Math.max(0.2,Math.min(9.8,y))];
+  });
+  draw();
+});
+draw();
+
+</script>
+</body>
+</html>
